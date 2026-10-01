@@ -14,13 +14,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { Kind, Transaction } from '@/types/database'
-import { useFinance } from '@/data/useFinance'
+import { useFinanceData } from '@/data/FinanceProvider'
 import { formatINR, todayISO } from '@/lib/utils'
 
-type Finance = ReturnType<typeof useFinance>
-
-export function TransactionPage({ kind, finance }: { kind: Kind; finance: Finance }) {
-  const { categories, transactions, addTransaction, updateTransaction, deleteTransaction, addRecurring } = finance
+export function TransactionPage({ kind }: { kind: Kind }) {
+  const { categories, transactions, addTransaction, updateTransaction, deleteTransaction, addRecurring } = useFinanceData()
   const cats = useMemo(() => categories.filter((c) => c.kind === kind), [categories, kind])
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories])
   const rows = useMemo(() => transactions.filter((t) => t.kind === kind).slice(0, 100), [transactions, kind])

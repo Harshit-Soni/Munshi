@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { Kind } from '@/types/database'
-import { useFinance } from '@/data/useFinance'
+import { useFinanceData } from '@/data/FinanceProvider'
 
-type Finance = ReturnType<typeof useFinance>
+type Finance = ReturnType<typeof useFinanceData>
 
 function CategorySection({ kind, finance }: { kind: Kind; finance: Finance }) {
   const { categories, addCategory, deleteCategory } = finance
@@ -74,7 +74,8 @@ function CategorySection({ kind, finance }: { kind: Kind; finance: Finance }) {
   )
 }
 
-export function CategoriesPage({ finance }: { finance: Finance }) {
+export function CategoriesPage() {
+  const finance = useFinanceData()
   return (
     <div className="space-y-6">
       <CategorySection kind="expense" finance={finance} />

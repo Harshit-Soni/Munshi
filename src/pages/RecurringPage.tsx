@@ -2,13 +2,11 @@ import { useMemo } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useFinance } from '@/data/useFinance'
+import { useFinanceData } from '@/data/FinanceProvider'
 import { formatINR } from '@/lib/utils'
 
-type Finance = ReturnType<typeof useFinance>
-
-export function RecurringPage({ finance }: { finance: Finance }) {
-  const { recurring, categories, stopRecurring } = finance
+export function RecurringPage() {
+  const { recurring, categories, stopRecurring } = useFinanceData()
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories])
 
   return (

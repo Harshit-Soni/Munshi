@@ -1,21 +1,11 @@
-import { useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { effectiveTheme, toggleTheme } from '@/lib/theme'
+import { useTheme } from '@/context/ThemeProvider'
 
-export function ThemeToggle({ onChange }: { onChange?: () => void }) {
-  const [theme, setTheme] = useState(effectiveTheme())
+export function ThemeToggle() {
+  const { theme, toggle } = useTheme()
   return (
-    <Button
-      variant="outline"
-      size="icon"
-      aria-label="Toggle theme"
-      onClick={() => {
-        toggleTheme()
-        setTheme(effectiveTheme())
-        onChange?.()
-      }}
-    >
+    <Button variant="outline" size="icon" aria-label="Toggle theme" onClick={toggle}>
       {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
   )

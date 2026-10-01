@@ -1,37 +1,24 @@
 import { useState } from 'react'
-import type { ReactNode } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { LayoutGrid, MinusCircle, PlusCircle, Repeat, Tags, Menu, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { useAuth } from '@/context/AuthProvider'
 
-export type View = 'dashboard' | 'expense' | 'saving' | 'recurring' | 'categories'
+export const NAV = [
+  { to: '/', label: 'Dashboard', icon: LayoutGrid },
+  { to: '/expenses', label: 'Add Expense', icon: MinusCircle },
+  { to: '/savings', label: 'Add Saving', icon: PlusCircle },
+  { to: '/recurring', label: 'Recurring', icon: Repeat },
+  { to: '/categories', label: 'Categories', icon: Tags },
+] as const
 
-const NAV: { id: View; label: string; icon: typeof LayoutGrid }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { id: 'expense', label: 'Add Expense', icon: MinusCircle },
-  { id: 'saving', label: 'Add Saving', icon: PlusCircle },
-  { id: 'recurring', label: 'Recurring', icon: Repeat },
-  { id: 'categories', label: 'Categories', icon: Tags },
-]
-
-export function AppShell({
-  view,
-  onNavigate,
-  onSignOut,
-  onThemeChange,
-  email,
-  children,
-}: {
-  view: View
-  onNavigate: (v: View) => void
-  onSignOut: () => void
-  onThemeChange?: () => void
-  email?: string
-  children: ReactNode
-}) {
+export function AppShell() {
   const [open, setOpen] = useState(false)
-  const title = NAV.find((n) => n.id === view)?.label ?? 'Dashboard'
+  const { signOut } = useAuth()
+  const { pathname } = useLocation()
+  const title = NAV.find((n) => n.to === pathname)?.label ?? 'Munshi'
 
   return (
     <div className="min-h-full">
@@ -50,32 +37,33 @@ export function AppShell({
           <span className="text-base font-bold tracking-tight">Munshi</span>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {NAV.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => {
-                onNavigate(id)
-                setOpen(false)
-              }}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                view === id
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
-              )}
+          {NAV.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                cn(
+                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                )
+              }
             >
               <Icon className="h-[18px] w-[18px] shrink-0" />
               <span>{label}</span>
-            </button>
+            </NavLink>
           ))}
         </nav>
         <div className="border-t border-border p-3">
           <button
-            onClick={onSignOut}
+            onClick={() => signOut()}
             className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           >
             <LogOut className="h-[18px] w-[18px] shrink-0" />
-            <span className="truncate">{email ? `Sign out` : 'Sign out'}</span>
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
@@ -88,10 +76,12 @@ export function AppShell({
             </Button>
             <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
           </div>
-          <ThemeToggle onChange={onThemeChange} />
+          <ThemeToggle />
         </header>
         <main className="flex-1 p-6 lg:p-8">
-          <div className="mx-auto max-w-[1100px]">{children}</div>
+          <div className="mx-auto max-w-[1100px]">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn, formatINR, monthLabel, monthSortKey, monthFirstDay, prevMonthLabel } from '@/lib/utils'
 import type { Category, Kind, Transaction } from '@/types/database'
-import { useFinance } from '@/data/useFinance'
+import { useFinanceData } from '@/data/FinanceProvider'
+import { useTheme } from '@/context/ThemeProvider'
 import { CHART_PALETTE } from '@/components/charts/chartTheme'
 import { DonutChart, type DonutDatum } from '@/components/charts/DonutChart'
 import { TrendBar, type TrendDatum } from '@/components/charts/TrendBar'
 
-type Finance = ReturnType<typeof useFinance>
 type Mode = 'month' | 'year' | 'all' | 'custom'
 
 const MODES: { id: Mode; label: string }[] = [
@@ -168,8 +168,9 @@ function Section({
   )
 }
 
-export function Dashboard({ finance }: { finance: Finance }) {
-  const { transactions, categories } = finance
+export function Dashboard() {
+  useTheme() // subscribe so charts recolor when the theme toggles
+  const { transactions, categories } = useFinanceData()
   const [mode, setMode] = useState<Mode>('all')
   const [monthVal, setMonthVal] = useState('')
   const [yearVal, setYearVal] = useState('')
