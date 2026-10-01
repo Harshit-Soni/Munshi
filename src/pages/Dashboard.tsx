@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { motion } from 'framer-motion'
+import type { Variants } from 'framer-motion'
 import { ArrowDown, ArrowUp, Percent, PiggyBank, Scale, Wallet } from 'lucide-react'
+import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -56,6 +59,15 @@ function TrendPill({ cur, prev, show }: { cur: number; prev: number; show: boole
   )
 }
 
+const statsContainer: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07 } },
+}
+const cardItem: Variants = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+}
+
 function StatTile({
   icon,
   tint,
@@ -67,20 +79,22 @@ function StatTile({
   icon: ReactNode
   tint: string
   label: string
-  value: string
+  value: ReactNode
   pill: ReactNode
   sub?: string
 }) {
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between">
-        <div className={cn('flex h-10 w-10 items-center justify-center rounded-md', tint)}>{icon}</div>
-        {pill}
-      </div>
-      <div className="mt-4 text-sm text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-bold tracking-tight">{value}</div>
-      {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
-    </Card>
+    <motion.div variants={cardItem}>
+      <Card className="p-5">
+        <div className="flex items-start justify-between">
+          <div className={cn('flex h-10 w-10 items-center justify-center rounded-md', tint)}>{icon}</div>
+          {pill}
+        </div>
+        <div className="mt-4 text-sm text-muted-foreground">{label}</div>
+        <div className="mt-1 text-2xl font-bold tracking-tight">{value}</div>
+        {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
+      </Card>
+    </motion.div>
   )
 }
 
@@ -240,11 +254,18 @@ export function Dashboard() {
                   key={m.id}
                   onClick={() => setMode(m.id)}
                   className={cn(
-                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                    mode === m.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                    'relative rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                    mode === m.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  {m.label}
+                  {mode === m.id && (
+                    <motion.span
+                      layoutId="rangePill"
+                      className="absolute inset-0 rounded-md bg-background shadow-sm"
+                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                  <span className="relative z-10">{m.label}</span>
                 </button>
               ))}
             </div>
@@ -289,12 +310,17 @@ export function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="mb-6 grid grid-cols-2 gap-5 lg:grid-cols-4">
+      <motion.div
+        className="mb-6 grid grid-cols-2 gap-5 lg:grid-cols-4"
+        variants={statsContainer}
+        initial="hidden"
+        animate="show"
+      >
         <StatTile
           icon={<Wallet className="h-[18px] w-[18px] text-destructive" />}
           tint="bg-destructive/10"
           label="Total Expense"
-          value={formatINR(totalExp)}
+          value={<AnimatedNumber value={totalExp} format={formatINR} />}
           pill={<TrendPill cur={totalExp} prev={prevExp} show={showTrend} />}
           sub={showTrend ? subText : undefined}
         />
@@ -302,7 +328,7 @@ export function Dashboard() {
           icon={<PiggyBank className="h-[18px] w-[18px] text-success" />}
           tint="bg-success/10"
           label="Total Savings"
-          value={formatINR(totalSav)}
+          value={<AnimatedNumber value={totalSav} format={formatINR} />}
           pill={<TrendPill cur={totalSav} prev={prevSav} show={showTrend} />}
           sub={showTrend ? subText : undefined}
         />
@@ -310,7 +336,7 @@ export function Dashboard() {
           icon={<Scale className="h-[18px] w-[18px] text-primary" />}
           tint="bg-primary/10"
           label="Savings − Expense"
-          value={formatINR(totalSav - totalExp)}
+          value={<AnimatedNumber value={totalSav - totalExp} format={formatINR} />}
           pill={<TrendPill cur={totalSav - totalExp} prev={prevSav - prevExp} show={showTrend} />}
           sub={showTrend ? subText : undefined}
         />
@@ -318,11 +344,11 @@ export function Dashboard() {
           icon={<Percent className="h-[18px] w-[18px] text-foreground" />}
           tint="bg-accent"
           label="Savings Rate"
-          value={`${rate.toFixed(1)}%`}
+          value={<AnimatedNumber value={rate} format={(v) => `${v.toFixed(1)}%`} />}
           pill={<TrendPill cur={rate} prev={prevRate} show={showTrend} />}
           sub={showTrend ? subText : undefined}
         />
-      </div>
+      </motion.div>
 
       <Section kind="expense" title="Expense Breakdown" txs={expF} cats={expCats} allTxs={exp} inRange={inRange} rangeActive={mode !== 'all'} />
       <Section kind="saving" title="Savings Breakdown" txs={savF} cats={savCats} allTxs={sav} inRange={inRange} rangeActive={mode !== 'all'} />

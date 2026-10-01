@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useOutlet } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { LayoutGrid, MinusCircle, PlusCircle, Repeat, Tags, Menu, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ export function AppShell() {
   const [open, setOpen] = useState(false)
   const { signOut } = useAuth()
   const { pathname } = useLocation()
+  const outlet = useOutlet()
   const title = NAV.find((n) => n.to === pathname)?.label ?? 'Munshi'
 
   return (
@@ -80,7 +82,17 @@ export function AppShell() {
         </header>
         <main className="flex-1 p-6 lg:p-8">
           <div className="mx-auto max-w-[1100px]">
-            <Outlet />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {outlet}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
       </div>
