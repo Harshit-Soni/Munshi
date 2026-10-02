@@ -5,6 +5,7 @@ import { LayoutGrid, MinusCircle, PlusCircle, Repeat, Tags, Menu, LogOut } from 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { Logo } from '@/components/Logo'
 import { useAuth } from '@/context/AuthProvider'
 
 export const NAV = [
@@ -32,10 +33,8 @@ export function AppShell() {
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold leading-none text-primary-foreground">
-            M
-          </span>
+        <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-border px-5">
+          <Logo className="h-8 w-8" />
           <span className="text-base font-bold tracking-tight">Munshi</span>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">

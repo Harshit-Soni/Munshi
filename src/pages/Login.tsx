@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { Variants } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import { Logo } from '@/components/Logo'
 
 const container: Variants = {
   hidden: {},
@@ -30,9 +31,18 @@ export function Login() {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError(error.message)
     } else {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) setError(error.message)
-      else setNotice('Account created. You can sign in now.')
+      const { data, error } = await supabase.auth.signUp({ email, password })
+      if (error) {
+        setError(error.message)
+      } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+        // Supabase returns a user with no identities when the email already exists.
+        setError('This email is already registered. Try signing in instead.')
+      } else if (data.session) {
+        // Confirmation is off — the user is already signed in; AuthProvider redirects.
+        setNotice('Account created — signing you in…')
+      } else {
+        setNotice('Almost there — check your email to confirm your account, then sign in.')
+      }
     }
     setBusy(false)
   }
@@ -81,17 +91,17 @@ export function Login() {
       >
         <motion.div variants={container} initial="hidden" animate="show">
           <motion.div variants={item} className="mb-6 flex flex-col items-center text-center">
-            <motion.span
-              className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-lg font-bold text-[#050b09] shadow-[0_0_24px_rgba(16,185,129,0.6)]"
+            <motion.div
+              className="mb-3 rounded-2xl"
               animate={{ boxShadow: [
-                '0 0 24px rgba(16,185,129,0.5)',
-                '0 0 36px rgba(16,185,129,0.8)',
-                '0 0 24px rgba(16,185,129,0.5)',
+                '0 0 24px rgba(16,185,129,0.4)',
+                '0 0 42px rgba(16,185,129,0.75)',
+                '0 0 24px rgba(16,185,129,0.4)',
               ] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
-              M
-            </motion.span>
+              <Logo className="h-14 w-14" />
+            </motion.div>
             <h1 className="text-2xl font-bold tracking-tight">Munshi</h1>
             <AnimatePresence mode="wait">
               <motion.p
