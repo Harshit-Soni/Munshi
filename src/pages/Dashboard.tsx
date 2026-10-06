@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { Variants } from 'framer-motion'
 import { ArrowDown, ArrowUp, Percent, PiggyBank, Scale, Wallet } from 'lucide-react'
@@ -7,7 +8,7 @@ import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { cn, formatINR, monthLabel, monthSortKey, monthFirstDay, prevMonthLabel } from '@/lib/utils'
+import { cn, formatINR, monthLabel, monthSortKey, monthFirstDay, prevMonthLabel, todayISO } from '@/lib/utils'
 import type { Category, Kind, Transaction } from '@/types/database'
 import { useFinanceData } from '@/data/FinanceProvider'
 import { useTheme } from '@/context/ThemeProvider'
@@ -182,9 +183,64 @@ function Section({
   )
 }
 
+function CoverageCard({ salary, spent, saved, month }: { salary: number; spent: number; saved: number; month: string }) {
+  if (salary <= 0) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="flex flex-col gap-1 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold tracking-tight">Salary coverage</div>
+            <div className="text-sm text-muted-foreground">Set your monthly salary to see how much is accounted for.</div>
+          </div>
+          <Link to="/settings" className="text-sm font-medium text-primary hover:underline">
+            Set salary →
+          </Link>
+        </CardContent>
+      </Card>
+    )
+  }
+  const accounted = spent + saved
+  const denom = Math.max(salary, accounted, 1)
+  const unlogged = Math.max(salary - accounted, 0)
+  const over = Math.max(accounted - salary, 0)
+  const coveredPct = Math.min((accounted / salary) * 100, 100)
+  return (
+    <Card className="mb-6">
+      <CardContent className="p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="text-sm font-semibold tracking-tight">Salary coverage · {month}</div>
+          <div className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{coveredPct.toFixed(0)}%</span> of {formatINR(salary)}
+          </div>
+        </div>
+        <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-full bg-destructive" style={{ width: `${(spent / denom) * 100}%` }} />
+          <div className="h-full bg-success" style={{ width: `${(saved / denom) * 100}%` }} />
+          <div className="h-full" style={{ width: `${(unlogged / denom) * 100}%` }} />
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-destructive" /> Spent {formatINR(spent)}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-success" /> Saved {formatINR(saved)}
+          </span>
+          {over > 0 ? (
+            <span className="text-destructive">Over salary by {formatINR(over)}</span>
+          ) : (
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{formatINR(unlogged)}</span> not tracked yet
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function Dashboard() {
   useTheme() // subscribe so charts recolor when the theme toggles
-  const { transactions, categories } = useFinanceData()
+  const { transactions, categories, currentSalary } = useFinanceData()
   const [mode, setMode] = useState<Mode>('all')
   const [monthVal, setMonthVal] = useState('')
   const [yearVal, setYearVal] = useState('')
@@ -220,6 +276,11 @@ export function Dashboard() {
   const expF = exp.filter((t) => inRange(t.date))
   const savF = sav.filter((t) => inRange(t.date))
 
+  // Salary coverage is always the *current* calendar month, independent of the range filter.
+  const thisMonth = monthLabel(todayISO())
+  const spentThisMonth = sum(exp.filter((t) => monthLabel(t.date) === thisMonth))
+  const savedThisMonth = sum(sav.filter((t) => monthLabel(t.date) === thisMonth))
+
   const totalExp = sum(expF)
   const totalSav = sum(savF)
   const rate = totalExp + totalSav > 0 ? (totalSav / (totalExp + totalSav)) * 100 : 0
@@ -244,6 +305,7 @@ export function Dashboard() {
 
   return (
     <div>
+      <CoverageCard salary={currentSalary} spent={spentThisMonth} saved={savedThisMonth} month={thisMonth} />
       <Card className="mb-6">
         <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">

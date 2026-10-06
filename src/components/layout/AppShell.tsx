@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useLocation, useOutlet } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LayoutGrid, MinusCircle, PlusCircle, Repeat, Tags, Menu, LogOut } from 'lucide-react'
+import { LayoutGrid, MinusCircle, PlusCircle, Repeat, Tags, Settings, Menu, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -14,6 +14,7 @@ export const NAV = [
   { to: '/savings', label: 'Add Saving', icon: PlusCircle },
   { to: '/recurring', label: 'Recurring', icon: Repeat },
   { to: '/categories', label: 'Categories', icon: Tags },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ] as const
 
 export function AppShell() {

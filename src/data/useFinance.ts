@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthProvider'
-import type { Category, Kind, Recurring, Transaction } from '@/types/database'
+import type { Category, Income, Kind, Recurring, Transaction } from '@/types/database'
+import { todayISO } from '@/lib/utils'
 
 export type NewTransaction = {
   kind: Kind
@@ -25,20 +26,29 @@ export function useFinance() {
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [recurring, setRecurring] = useState<Recurring[]>([])
+  const [incomes, setIncomes] = useState<Income[]>([])
   const [loading, setLoading] = useState(true)
 
   const reload = useCallback(async () => {
     setLoading(true)
-    const [cat, tx, rec] = await Promise.all([
+    const [cat, tx, rec, inc] = await Promise.all([
       supabase.from('categories').select('*').order('name'),
       supabase.from('transactions').select('*').order('date', { ascending: false }),
       supabase.from('recurring_transactions').select('*').order('start_date', { ascending: false }),
+      supabase.from('incomes').select('*').order('effective_from', { ascending: false }),
     ])
     setCategories(cat.data ?? [])
     setTransactions(tx.data ?? [])
     setRecurring(rec.data ?? [])
+    setIncomes(inc.data ?? [])
     setLoading(false)
   }, [])
+
+  // Current salary: the most recent income whose effective_from is on/before today.
+  const currentSalary = useMemo(() => {
+    const today = todayISO()
+    return incomes.find((i) => i.effective_from <= today)?.amount ?? 0
+  }, [incomes])
 
   useEffect(() => {
     if (user) reload()
@@ -109,10 +119,22 @@ export function useFinance() {
     [reload],
   )
 
+  // Set the current salary by inserting a new effective-dated income row.
+  const setSalary = useCallback(
+    async (amount: number) => {
+      if (!user) return
+      await supabase.from('incomes').insert({ user_id: user.id, amount, effective_from: todayISO() })
+      await reload()
+    },
+    [user, reload],
+  )
+
   return {
     categories,
     transactions,
     recurring,
+    incomes,
+    currentSalary,
     loading,
     reload,
     addTransaction,
@@ -122,5 +144,6 @@ export function useFinance() {
     deleteCategory,
     addRecurring,
     stopRecurring,
+    setSalary,
   }
 }

@@ -39,6 +39,33 @@ export type Database = {
         }
         Relationships: []
       }
+      incomes: {
+        Row: {
+          amount: number
+          created_at: string
+          effective_from: string
+          id: string
+          label: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          effective_from?: string
+          id?: string
+          label?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          effective_from?: string
+          id?: string
+          label?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       recurring_transactions: {
         Row: {
           amount: number
@@ -142,3 +169,4 @@ export type Kind = 'expense' | 'saving'
 export type Category = Database['public']['Tables']['categories']['Row']
 export type Transaction = Database['public']['Tables']['transactions']['Row']
 export type Recurring = Database['public']['Tables']['recurring_transactions']['Row']
+export type Income = Database['public']['Tables']['incomes']['Row']

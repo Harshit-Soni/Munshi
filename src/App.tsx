@@ -9,6 +9,7 @@ import { Dashboard } from '@/pages/Dashboard'
 import { TransactionPage } from '@/pages/TransactionPage'
 import { RecurringPage } from '@/pages/RecurringPage'
 import { CategoriesPage } from '@/pages/CategoriesPage'
+import { SettingsPage } from '@/pages/SettingsPage'
 
 function FullScreenMessage({ children }: { children: ReactNode }) {
   return <div className="flex min-h-full items-center justify-center text-sm text-muted-foreground">{children}</div>
@@ -55,6 +56,7 @@ export default function App() {
                 <Route path="/savings" element={<TransactionPage kind="saving" />} />
                 <Route path="/recurring" element={<RecurringPage />} />
                 <Route path="/categories" element={<CategoriesPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
