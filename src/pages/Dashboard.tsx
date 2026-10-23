@@ -8,6 +8,7 @@ import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { cn, formatINR, monthLabel, monthSortKey, monthFirstDay, prevMonthLabel, todayISO } from '@/lib/utils'
 import type { Category, Kind, Transaction } from '@/types/database'
 import { useFinanceData } from '@/data/FinanceProvider'
@@ -127,6 +128,7 @@ function Section({
   allTxs,
   inRange,
   rangeActive,
+  catName,
 }: {
   kind: Kind
   title: string
@@ -135,6 +137,7 @@ function Section({
   allTxs: Transaction[]
   inRange: (d: string) => boolean
   rangeActive: boolean
+  catName: Map<string, string>
 }) {
   const rows = categoryBreakdown(txs, cats)
   const grand = sum(txs)
@@ -151,9 +154,9 @@ function Section({
   }))
 
   return (
-    <>
+    <section className="mb-8">
       <h2 className="mb-3 text-base font-semibold tracking-tight">{title}</h2>
-      <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Monthly Trend</CardTitle>
@@ -179,7 +182,46 @@ function Section({
           </CardContent>
         </Card>
       </div>
-    </>
+      <Card>
+        <Accordion type="single" collapsible>
+          <AccordionItem value="txns" className="border-b-0">
+            <AccordionTrigger className="px-5 text-sm">
+              <span className="flex items-center gap-2">
+                <span className={cn('h-2 w-2 rounded-full', kind === 'expense' ? 'bg-destructive' : 'bg-success')} />
+                Transactions <span className="text-muted-foreground">({txs.length}) · {formatINR(grand)}</span>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="px-5">
+              <div className="max-h-80 overflow-y-auto pr-1">
+                <TxnList items={txs} catName={catName} />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </Card>
+    </section>
+  )
+}
+
+function TxnList({ items, catName }: { items: Transaction[]; catName: Map<string, string> }) {
+  if (!items.length) return <p className="py-2 text-sm text-muted-foreground">No transactions in this period.</p>
+  const rows = [...items].sort((a, b) => b.date.localeCompare(a.date))
+  return (
+    <div className="divide-y divide-border">
+      {rows.map((t) => (
+        <div key={t.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+          <div className="min-w-0">
+            <div className="font-medium">{t.category_id ? catName.get(t.category_id) ?? '—' : '—'}</div>
+            <div className="truncate text-xs text-muted-foreground">
+              {t.date}
+              {t.description ? ` · ${t.description}` : ''}
+              {t.source === 'recurring' ? ' · recurring' : ''}
+            </div>
+          </div>
+          <div className="shrink-0 font-medium">{formatINR(t.amount)}</div>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -249,6 +291,7 @@ export function Dashboard() {
 
   const expCats = useMemo(() => categories.filter((c) => c.kind === 'expense'), [categories])
   const savCats = useMemo(() => categories.filter((c) => c.kind === 'saving'), [categories])
+  const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories])
 
   const months = useMemo(() => {
     const s = new Set<string>()
@@ -412,8 +455,8 @@ export function Dashboard() {
         />
       </motion.div>
 
-      <Section kind="expense" title="Expense Breakdown" txs={expF} cats={expCats} allTxs={exp} inRange={inRange} rangeActive={mode !== 'all'} />
-      <Section kind="saving" title="Savings Breakdown" txs={savF} cats={savCats} allTxs={sav} inRange={inRange} rangeActive={mode !== 'all'} />
+      <Section kind="expense" title="Expense Breakdown" txs={expF} cats={expCats} allTxs={exp} inRange={inRange} rangeActive={mode !== 'all'} catName={catName} />
+      <Section kind="saving" title="Savings Breakdown" txs={savF} cats={savCats} allTxs={sav} inRange={inRange} rangeActive={mode !== 'all'} catName={catName} />
     </div>
   )
 }

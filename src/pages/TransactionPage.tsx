@@ -15,13 +15,16 @@ import {
 } from '@/components/ui/dialog'
 import type { Kind, Transaction } from '@/types/database'
 import { useFinanceData } from '@/data/FinanceProvider'
+import { usePeriodFilter } from '@/hooks/usePeriodFilter'
 import { formatINR, todayISO } from '@/lib/utils'
 
 export function TransactionPage({ kind }: { kind: Kind }) {
   const { categories, transactions, addTransaction, updateTransaction, deleteTransaction, addRecurring } = useFinanceData()
   const cats = useMemo(() => categories.filter((c) => c.kind === kind), [categories, kind])
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories])
-  const rows = useMemo(() => transactions.filter((t) => t.kind === kind).slice(0, 100), [transactions, kind])
+  const kindTx = useMemo(() => transactions.filter((t) => t.kind === kind), [transactions, kind])
+  const { node: periodFilter, predicate } = usePeriodFilter(useMemo(() => kindTx.map((t) => t.date), [kindTx]))
+  const rows = useMemo(() => kindTx.filter((t) => predicate(t.date)).slice(0, 100), [kindTx, predicate])
 
   const [open, setOpen] = useState(false)
   const [date, setDate] = useState(todayISO())
@@ -103,6 +106,8 @@ export function TransactionPage({ kind }: { kind: Kind }) {
           Add {noun}
         </Button>
       </div>
+
+      {periodFilter}
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">

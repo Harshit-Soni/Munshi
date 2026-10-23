@@ -52,7 +52,10 @@ export function useFinance() {
 
   useEffect(() => {
     if (user) reload()
-  }, [user, reload])
+    // Key on the user id, not the user object, so a tab-focus token refresh
+    // (same user, new session object) doesn't re-trigger a full reload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, reload])
 
   const addTransaction = useCallback(
     async (t: NewTransaction) => {

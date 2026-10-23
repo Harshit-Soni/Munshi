@@ -22,7 +22,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s)
+      // Keep the same reference when the token is unchanged so tab-focus token
+      // refreshes don't churn the user object and trigger a full data refetch.
+      setSession((prev) => (prev?.access_token === s?.access_token ? prev : s))
     })
     return () => sub.subscription.unsubscribe()
   }, [])
